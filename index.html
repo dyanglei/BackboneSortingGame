@@ -2,11 +2,15 @@
 <html>
 <head>
 <title>Sorting Game Backbone</title>
+<link rel="stylesheet" href="css/sorting.css"/>
 </head>
 <body>
 <div id="sortingGame">
-    <section id="main"> 
+    <h1>Sorting Bars</h1>
+	
+    <section id="main"> 	   
 	   <button id="newGame">New Game</button>
+	   <button id="replay">Replay</button>
        <table id="table"></table>
     </section>
 
@@ -14,6 +18,12 @@
       <div id="steps"></div>
     </footer>
 </div>
+<h2 id="instructions">
+    Instructions: Click New Game to shuffle the bars. Click<img src="images/up.png" height="25" width="25"> and <img src="images/down.png" height="25" width="25"> to move bars to return to pyramid shape.
+</h2>
+  <div id="credits">
+    Created by Lei Yang   
+  </div>
 
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>

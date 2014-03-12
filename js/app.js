@@ -4,15 +4,16 @@ LengthModel = Backbone.Model.extend({
 value: 0
 });
 
+CounterModel = Backbone.Model.extend({
+value: 0
+});
+
 LengthCollection = Backbone.Collection.extend({
 model: LengthModel
 });
 
-ArrayModel = Backbone.Model.extend({
-array: []
-});
-
-var arraymodel=new ArrayModel({array:[1,2,3,4,5,6,7]});
+var lengthcollection= new LengthCollection;
+var countermodel=new CounterModel({value:0});
 
 RowView=Backbone.View.extend({
     tagName: 'tr',    
@@ -28,101 +29,130 @@ RowView=Backbone.View.extend({
       this.model.bind('change', this.render);      
     },
 
-    render: function(){
-	  imagefile= 'length'+this.model.get('value')+'.png';
-      $(this.el).html('<td><img src="images/'+imagefile+'"></td> <td class="up" style="cursor:pointer;"><img src="images/up.png" alt="up" height="50" width="50"></td> <td class="down" style="cursor:pointer;"><img src="images/down.png" alt="down" height="50" width="50"></td>');
+    render: function(){	  
+	  
+      $(this.el).html('<td><img src="images/bar.png" height="50" width="'+(50*this.model.get('value')).toString()+'"></td> <td class="up" style="cursor:pointer;"><img src="images/up.png" alt="up" height="50" width="50"></td> <td class="down" style="cursor:pointer;"><img src="images/down.png" alt="down" height="50" width="50"></td>');
       return this; 
     },   
 
     up: function(){
-      console.log("up pressed");
+            
       if (!$(this.el).index()){ console.log("It's the first one")}
 	  else{
 	  var prevIndex=$(this.el).prev().index();
 	  var ownIndex=$(this.el).index();
-	  temp1=arraymodel.get("array")[prevIndex];
-	  temp2=arraymodel.get("array")[ownIndex];
-	  console.log(prevIndex+' '+temp1);
-	  console.log(ownIndex+' '+temp2);
-	  arraymodel.get("array")[prevIndex]=temp2;
-	  arraymodel.get("array")[ownIndex]=temp1;	 
-      this.model.set({value: temp1});	  
+	  
+	  var temp = lengthcollection.at(prevIndex).get('value');
+        lengthcollection.at(prevIndex).set({value:lengthcollection.at(ownIndex).get('value')});
+        lengthcollection.at(ownIndex).set({value:temp});	  
+	   
 	  }
-      console.log(arraymodel.get("array"));
+      countermodel.set({value:(countermodel.get('value')+1)});
+      this.check();
     },
 
     down: function(){
-      console.log("down pressed");
-      
-    }
+       if ($(this.el).index()==lengthcollection.length-1){ console.log("It's the last one")}
+	  else{
+	  var nextIndex=$(this.el).next().index();
+	  var ownIndex=$(this.el).index();
+	  
+	  var temp = lengthcollection.at(nextIndex).get('value');
+        lengthcollection.at(nextIndex).set({value:lengthcollection.at(ownIndex).get('value')});
+        lengthcollection.at(ownIndex).set({value:temp});  
+	   
+	  } 
+      countermodel.set({value:(countermodel.get('value')+1)}); 	 
+      this.check();
+    },
+	
+	check: function(){
+	var temp=true;
+      for (var i=0; i<lengthcollection.length; i++){
+	  if (lengthcollection.at(i).get("value")!=(i+1)){
+	  temp=false;
+	  break;
+	  }
+      }	  
+      if(temp==true){
+	  alert("Congratulation! You finished in "+countermodel.get('value').toString()+" steps!");
+	  }
+	},
   });
   
+FooterView = Backbone.View.extend({
+el: $("#steps"),
+initialize: function(){
+_.bindAll(this, 'render');
+countermodel.bind("change",this.render);
 
+},
+
+render: function(){
+$(this.el).html("Steps: "+countermodel.get("value").toString());
+},
+});
   
 MainView = Backbone.View.extend({
 el: $("#main"),
 
 events: {
-  "click button#newGame": "shuffle",
+  "click button#newGame": "shuffleCollection",
+  "click button#replay": "replay",
 },
 
 initialize: function () {
- _.bindAll(this, 'update','render','shuffleArray','shuffle');
-this.model = arraymodel;
-this.collection = new LengthCollection();
-this.model.bind('change', this.render);
-this.collection.bind('change', this.render);
+ //_.bindAll(this, 'render','shuffleCollection');
+ this.array=[1,2,3,4,5,6,7];
+ 
+for(var i=1; i<8; i++){
+lengthcollection.add(new LengthModel({value:i}));
 
-this.model.set({array: this.shuffleArray(this.model.get("array"))});
+}
+//lengthcollection.bind('change',this.render);
+
 this.render();
 },
 
-shuffle: function(){
-this.model.set({array: this.shuffleArray(this.model.get("array"))});
-this.update();
-},
-
-update: function(){
-console.log(this.collection.length);
-for (var i=0; i< this.model.get("array").length; i++){ 
-	this.collection.at(i).set({value: this.model.get("array")[i]});
-	}
-console.log(this.model.get('array'));
-console.log(arraymodel.get('array'));
-},
 
 render: function(){
-    console.log('hi');
-    if(!$('#table',this.el).children().length){
-	for (var i=0; i< this.model.get("array").length; i++){ 
-	var length=new LengthModel({value: this.model.get("array")[i]});
-	this.collection.add(length);
-	}
-	}
+    
+    if(!$('#table',this.el).children().length){	}
 	else {
-	$('#table',this.el).empty();
-	console.log('hi');
+	$('#table',this.el).empty();	
 	}
-	var array= this.model.get("array");
-    for (var i=0; i< array.length; i++){ 
-	var rowview = new RowView({model: this.collection.at(i)});	
+		
+    for (var i=0; i< lengthcollection.length; i++){ 
+	var rowview = new RowView({model: lengthcollection.at(i)});	
 	$('#table',this.el).append(rowview.render().el);	
-	//$($('#tr',this.el).eq(index)).html($(layerView.render().el).html());	
+	
 }	
 },
 
-shuffleArray: function(array) {
-    for (var i = array.length - 1; i > 0; i--) {
+shuffleCollection: function(){
+   countermodel.set({value:0});
+   for (var i = lengthcollection.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
-        var temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
+        var temp = lengthcollection.at(i).get('value');
+        lengthcollection.at(i).set({value:lengthcollection.at(j).get('value')});
+        lengthcollection.at(j).set({value:temp});
     }
-    return array;
+	
+	for (var i=0; i<this.array.length; i++){
+	this.array[i]=lengthcollection.at(i).get('value');
+	}
+	    
 },
+
+replay: function(){
+for (var i=0; i<this.array.length; i++){
+	lengthcollection.at(i).set({value:this.array[i]});
+	}
+	countermodel.set({value:0});
+}
 
 });
 
-
+var footerview =new FooterView;
 var mainview = new MainView;
 })(jQuery);
